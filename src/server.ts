@@ -68,6 +68,7 @@ async function login(page: any) {
 //app.use("/admin/queues", serverAdapter.getRouter());
 app.get("/", async (_req: Request, res: Response) => {
   try {
+    console.log("cock")
     puppeteer.use(StealthPlugin());
     const launchOptions = {
       headless: true,
@@ -86,15 +87,15 @@ app.get("/", async (_req: Request, res: Response) => {
         ? process.env.PUPPETEER_EXECUTABLE_PATH
         : puppeteer.executablePath(),
     };
-  
+    console.log("cock")
     const browser = await puppeteer.launch(launchOptions);
     try {
       const page = await browser.newPage();
 
       await page.goto(`${BASE_URL}`, { waitUntil: "networkidle2" });
-
+console.log("cock")
       await login(page);
-
+      console.log("cock")
       const tweets = await page.evaluate(() => {
           const formatTweet = (el: Element) => {
             const typeClasses = el.className.split(" ").filter(Boolean);
