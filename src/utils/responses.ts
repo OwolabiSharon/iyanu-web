@@ -1,6 +1,5 @@
 import { Response } from "express";
 import Joi from "joi";
-import * as Sentry from "@sentry/node";
 
 interface ResponseArgs {
   title: string;
