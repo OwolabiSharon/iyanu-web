@@ -73,7 +73,7 @@ app.get("/", (_req, res) => {
 app.get("/scrape", async (_req: Request, res: Response) => {
   try {
     console.log("ran get")
-    puppeteer.use(StealthPlugin());
+    // puppeteer.use(StealthPlugin());
     const launchOptions = {
       headless: true,
       ignoreHTTPSErrors: true,
