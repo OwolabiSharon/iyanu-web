@@ -65,8 +65,12 @@ async function login(page: any) {
     
 }
 
+app.get("/", (_req, res) => {
+  res.status(200).send("OK");
+});
+
 //app.use("/admin/queues", serverAdapter.getRouter());
-app.get("/", async (_req: Request, res: Response) => {
+app.get("/scrape", async (_req: Request, res: Response) => {
   try {
     console.log("ran get")
     puppeteer.use(StealthPlugin());
