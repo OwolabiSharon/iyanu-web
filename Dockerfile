@@ -6,12 +6,13 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm install --legacy-peer-deps
+COPY package.json yarn.lock ./ 
+RUN yarn install --frozen-lockfile --production=false
 
 COPY . .
 RUN npm run build
 
 EXPOSE 10000
 
-CMD ["npm", "run", "start"]
+CMD ["yarn", "start"]
+
