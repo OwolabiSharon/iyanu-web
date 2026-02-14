@@ -68,7 +68,7 @@ async function login(page: any) {
 //app.use("/admin/queues", serverAdapter.getRouter());
 app.get("/", async (_req: Request, res: Response) => {
   try {
-    console.log("cock")
+    console.log("ran get")
     puppeteer.use(StealthPlugin());
     const launchOptions = {
       headless: true,
@@ -87,15 +87,15 @@ app.get("/", async (_req: Request, res: Response) => {
         ? process.env.PUPPETEER_EXECUTABLE_PATH
         : puppeteer.executablePath(),
     };
-    console.log("cock")
+    console.log("setting up browser")
     const browser = await puppeteer.launch(launchOptions);
     try {
       const page = await browser.newPage();
 
       await page.goto(`${BASE_URL}`, { waitUntil: "networkidle2" });
-console.log("cock")
+console.log("went to page")
       await login(page);
-      console.log("cock")
+      console.log("logged in to so and so")
       const tweets = await page.evaluate(() => {
           const formatTweet = (el: Element) => {
             const typeClasses = el.className.split(" ").filter(Boolean);
@@ -173,6 +173,7 @@ console.log("cock")
           return Array.from(document.querySelectorAll(".tweet-embed"))
             .map(formatTweet);
         });
+        console.log("here here")
         const uniqueData = tweets.filter((item: any) => {
           const key = JSON.stringify(item);
           if (seen.includes(key)) return false;
