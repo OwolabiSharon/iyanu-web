@@ -69,10 +69,17 @@ async function login(page: any) {
 app.get("/", async (_req: Request, res: Response) => {
   puppeteer.use(StealthPlugin());
     const launchOptions = {
-      headless: false, // Set to false if you want to see the browser UI
-      ignoreHTTPSErrors: true, // This option resolves the certificate error
-      // Optional: Add arguments for stability in different environments like Docker
-      args: ['--disable-setuid-sandbox', '--no-sandbox'], 
+      headless: true,
+      ignoreHTTPSErrors: true,
+      args: [
+        '--disable-setuid-sandbox',
+        '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process'
+      ],
       executablePath:
       process.env.NODE_ENV === "production"
         ? process.env.PUPPETEER_EXECUTABLE_PATH

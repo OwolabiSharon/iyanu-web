@@ -10,9 +10,9 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production=false
 
 COPY . .
-RUN npm run build
+RUN yarn build
 
 EXPOSE 10000
 
-CMD ["yarn", "start"]
+CMD ["node", "-r", "module-alias/register", "./dist", "--node_env=production"]
 
