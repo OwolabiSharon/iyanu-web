@@ -1,0 +1,46 @@
+name: Build & Test Commit
+run-name: ${{ github.actor }} made a commit on ${{github.ref_name}} branch
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'development'
+      - 'master'
+      - 'prod'
+
+env:
+  NODE_VERSION: "v22.5.1"
+  ENV_PATH: "src/pre-start/env"
+  NODE_ENV: "staging"
+
+jobs:
+  build-only:
+    runs-on: 'ubuntu-latest'
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+  
+      - name: Create ${{env.ENV_PATH}} subdirectory
+        run: mkdir -p ${{env.ENV_PATH}}
+  
+      - name: Create ${{env.NODE_ENV}}.env file & other env files
+        run: |
+          echo '${{ secrets.ENV_VARS }}' > ${{env.ENV_PATH}}/${{env.NODE_ENV}}.env
+          echo '${{ secrets.AUTH_KEY_DOT_P8 }}' > ${{env.ENV_PATH}}/AuthKey.p8
+          echo '${{ secrets.CA_CERTIFICATE }}' > ${{env.ENV_PATH}}/ca-certificate.cer
+          echo '${{ secrets.SERVICE_ACCOUNT_KEY }}' > ${{env.ENV_PATH}}/serviceAccountKey.json
+  
+  
+      - name: yarn install, build
+        run: |
+          yarn install
+          yarn build-dist "${{env.NODE_ENV}}"

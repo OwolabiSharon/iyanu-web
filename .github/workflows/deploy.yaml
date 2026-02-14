@@ -1,0 +1,109 @@
+name: Build & Deploy latest changes
+run-name: ${{ github.actor }} made a push to the ${{github.ref_name}} branch
+on:
+  push:
+    branches:
+      - "main"
+      - "development"
+      - "EADS-283"
+
+env:
+  NODE_VERSION: "v22.5.1"
+  NODE_ENV: "staging"
+  ENV_PATH: "src/pre-start/env"
+  APP_NAME: "ead-backend"
+
+jobs:
+  build-and-deploy:
+    runs-on: "ubuntu-latest"
+    environment: staging
+
+    steps:
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create ${{env.ENV_PATH}} subdirectory
+        run: mkdir -p ${{env.ENV_PATH}}
+
+      - name: Create ${{env.NODE_ENV}}.env file & other env files
+        run: |
+          echo '${{ secrets.ENV_VARS }}' > ${{env.ENV_PATH}}/${{env.NODE_ENV}}.env
+          echo '${{ secrets.AUTH_KEY_DOT_P8 }}' > ${{env.ENV_PATH}}/AuthKey.p8
+          echo '${{ secrets.CA_CERTIFICATE }}' > ${{env.ENV_PATH}}/ca-certificate.cer
+          echo '${{ secrets.SERVICE_ACCOUNT_KEY }}' > ${{env.ENV_PATH}}/serviceAccountKey.json
+
+      - name: yarn install, build
+        run: |
+          yarn install
+          yarn build-dist "${{env.NODE_ENV}}"
+
+      - name: Copy package.json artifact to server via ssh key
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          source: package.json
+          target: "/var/www/ead-backend/"
+          timeout: 120s
+      - name: Copy yarn.lock artifact to server via ssh key
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          source: yarn.lock
+          target: "/var/www/ead-backend/"
+          timeout: 200s
+      - name: Copy .nvmrc artifact to server via ssh key
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          source: .nvmrc
+          target: "/var/www/ead-backend/"
+          timeout: 120s
+      - name: Copy build dist artifacts to server via ssh key
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          source: dist
+          target: "/var/www/ead-backend/"
+          timeout: 120s
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }} # IP address of the server you wish to ssh into
+          username: ${{ secrets.SSH_USERNAME }} # User of the server you want to ssh into
+          key: ${{ secrets.SSH_KEY }} # Private or public key of the server
+          passphrase: ${{ secrets.PASSPHRASE }}
+          script: |
+            cd /var/www/
+            # Check if the directory exists using the `-d` operator
+            if [ ! -d "ead-backend" ]; then
+              echo "Directory 'ead-backend' doesn't exists."
+            else
+              echo "Directory 'ead-backend' exists."
+              cd ead-backend
+              pwd
+              export NVM_DIR=$HOME/.nvm
+              source $NVM_DIR/nvm.sh
+              nvm install
+              yarn install
+              pm2 stop "${{env.APP_NAME}}"
+              pm2 delete "${{env.APP_NAME}}" && pm2 save --force 
+              pm2 start ./dist/ecosystem.config.js -- ${{env.NODE_ENV}}
+              pm2 save
+            fi
