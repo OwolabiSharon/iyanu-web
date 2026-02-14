@@ -67,7 +67,8 @@ async function login(page: any) {
 
 //app.use("/admin/queues", serverAdapter.getRouter());
 app.get("/", async (_req: Request, res: Response) => {
-  puppeteer.use(StealthPlugin());
+  try {
+    puppeteer.use(StealthPlugin());
     const launchOptions = {
       headless: true,
       ignoreHTTPSErrors: true,
@@ -78,7 +79,7 @@ app.get("/", async (_req: Request, res: Response) => {
         '--disable-gpu',
         '--no-first-run',
         '--no-zygote',
-        '--single-process'
+        '--disable-software-rasterizer'
       ],
       executablePath:
       process.env.NODE_ENV === "production"
@@ -184,9 +185,13 @@ app.get("/", async (_req: Request, res: Response) => {
         if (seen.length > uniqueData.length) {
           seen.splice(0, uniqueData.length);
         }
-    res.send({uniqueData, length: uniqueData.length, tlength: tweets.length});
-  } finally {
-    await browser.close();
+      res.send({uniqueData, length: uniqueData.length, tlength: tweets.length});
+    } finally {
+      await browser.close();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({ error: "Failed to scrape data" });
   }
 });
 
