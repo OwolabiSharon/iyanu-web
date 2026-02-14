@@ -73,6 +73,10 @@ app.get("/", async (_req: Request, res: Response) => {
       ignoreHTTPSErrors: true, // This option resolves the certificate error
       // Optional: Add arguments for stability in different environments like Docker
       args: ['--disable-setuid-sandbox', '--no-sandbox'], 
+      executablePath:
+      process.env.NODE_ENV === "production"
+        ? process.env.PUPPETEER_EXECUTABLE_PATH
+        : puppeteer.executablePath(),
     };
   
     const browser = await puppeteer.launch(launchOptions);
